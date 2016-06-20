@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = GLSandbox
+TARGET = Instancing
 TEMPLATE = app
 
-SOURCES += GLSandbox.cpp
+SOURCES += Instancing.cpp

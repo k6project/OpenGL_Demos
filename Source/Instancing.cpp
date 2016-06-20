@@ -12,8 +12,8 @@ static struct Scene
     QMatrix4x4 Projection, View;
     union
     {
-        struct { GLuint VBO, IBO; };
-        GLuint Buffers[2];
+        struct { GLuint VBO, IBO, TFB; };
+        GLuint Buffers[3];
     };
     GLuint VAO, Shader, NumInst;
     Scene() {}
@@ -22,7 +22,7 @@ static struct Scene
 struct InstanceData
 {
     QMatrix4x4 Transform;
-    GLshort Modifier[2];
+    GLuint Modifier;
 };
 
 static const struct Vertex { QVector3D p, n; }
@@ -72,13 +72,14 @@ size_t MakePyramid(quint32 levels, quint32 &outCount, quint8 *buffer, size_t max
     float hStep = 2.4f, vStep = 2.f;
     quint32 count = PyramidNumber(levels), index = 0;
     size_t reqBytes = count * sizeof(InstanceData) + sizeof(CUBE_MESH_VERTICES);
+
     if (reqBytes <= max)
     {
         memcpy(buffer, CUBE_MESH_VERTICES, sizeof(CUBE_MESH_VERTICES));
         InstanceData *instances = new (buffer + sizeof(CUBE_MESH_VERTICES)) InstanceData[count];
         for (quint32 levelSize = levels; levelSize > 0; levelSize--)
         {
-            GLushort colorMod = levelSize & 1U;
+            GLuint colorMod = levelSize & 1U;
             float y = (levels - levelSize) * vStep;
             float start = (levelSize - 1) * hStep * (-0.5f);
             for (quint32 column = 0; column < levelSize; column++)
@@ -89,7 +90,7 @@ size_t MakePyramid(quint32 levels, quint32 &outCount, quint8 *buffer, size_t max
                     float z = start + row * hStep;
                     InstanceData *instance = &instances[index];
                     instance->Transform.translate(x, y, z);
-                    instance->Modifier[0] = colorMod;
+                    instance->Modifier = colorMod;
                     index++;
                 }
             }
@@ -112,19 +113,21 @@ void ResizeFrame()
 void CreateScene()
 {
     quint8 buff[2048];
+    static const GLchar *tfData[] = { "vColorModifier" };
     size_t totalBytes = MakePyramid(3, scene.NumInst, buff, sizeof(buff));
     scene.View.lookAt({0.f, 7.f, 8.f}, {0.f, 0.f, 0.f}, {0.f, 1.f, 0.f});
 
-    scene.Shader = loadShader("Shaders/Default");
+    scene.Shader = loadShader("Shaders/Instancing");
+    glTransformFeedbackVaryings(scene.Shader, 1, tfData, GL_INTERLEAVED_ATTRIBS);
     glLinkProgram(scene.Shader);
     glUseProgram(scene.Shader);
 
     GLint view = glGetUniformLocation(scene.Shader, "uView");
     glUniformMatrix4fv(view, 1, GL_FALSE, scene.View.constData());
 
+    glGenBuffers(3, scene.Buffers);
     glGenVertexArrays(1, &scene.VAO);
     glBindVertexArray(scene.VAO);
-    glGenBuffers(2, scene.Buffers);
     glBindBuffer(GL_ARRAY_BUFFER, scene.VBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, scene.IBO);
     glBufferData(GL_ARRAY_BUFFER, totalBytes, buff, GL_STATIC_DRAW);
@@ -146,7 +149,7 @@ void CreateScene()
     offset += sizeof(float) << 2;
     glVertexAttribPointer(VA_TOWORLD + 3, 4, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offset);
     offset += sizeof(float) << 2;
-    glVertexAttribIPointer(VA_COLORMOD, 2, GL_UNSIGNED_SHORT, sizeof(InstanceData), (void*) offset);
+    glVertexAttribIPointer(VA_COLORMOD, 1, GL_UNSIGNED_INT, sizeof(InstanceData), (void*) offset);
 
     glVertexAttribDivisor(VA_TOWORLD + 0, 1);
     glVertexAttribDivisor(VA_TOWORLD + 1, 1);
