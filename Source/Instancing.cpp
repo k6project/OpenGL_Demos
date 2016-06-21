@@ -145,7 +145,7 @@ void CreateScene()
     glVertexAttribPointer(VA_TOWORLD + 2, 4, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offset);
     offset += sizeof(float) << 2;
     glVertexAttribPointer(VA_TOWORLD + 3, 4, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offset);
-    offset += sizeof(float) << 2;
+    offset += sizeof(CUBE_MESH_VERTICES) + sizeof(QMatrix4x4);
     glVertexAttribIPointer(VA_COLORMOD, 1, GL_UNSIGNED_INT, sizeof(InstanceData), (void*) offset);
 
     glVertexAttribDivisor(VA_TOWORLD + 0, 1);
