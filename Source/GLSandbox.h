@@ -9,11 +9,20 @@
 #include <QtGui/QOpenGLFunctions_4_1_Core>
 
 #define CreateScene() GLView::createScene()
+#define DestroyScene() GLView::destroyScene()
 #define RenderFrame() GLView::paintGL()
 #define ResizeFrame() GLView::resizeScene()
 
 class GLView : public QOpenGLWidget, private QOpenGLFunctions_4_1_Core
 {
+public:
+    ~GLView()
+    {
+        makeCurrent();
+        destroyScene();
+        doneCurrent();
+    }
+
 protected:
 
     QMap<GLuint, QOpenGLShaderProgram *> mShaders;
@@ -51,6 +60,8 @@ protected:
     void createScene();
 
     void resizeScene();
+
+    void destroyScene();
 
     virtual void paintGL() override;
 

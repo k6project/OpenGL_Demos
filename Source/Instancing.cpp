@@ -78,7 +78,7 @@ size_t MakePyramid(quint32 levels, quint32 &outCount, quint8 *buffer, size_t max
         InstanceData *instances = new (buffer + sizeof(CUBE_MESH_VERTICES)) InstanceData[count];
         for (quint32 levelSize = levels; levelSize > 0; levelSize--)
         {
-            GLuint colorMod = levelSize & 1U;
+            GLuint colorMod = levelSize % 2;
             float y = (levels - levelSize) * vStep;
             float start = (levelSize - 1) * hStep * (-0.5f);
             for (quint32 column = 0; column < levelSize; column++)
@@ -145,7 +145,7 @@ void CreateScene()
     glVertexAttribPointer(VA_TOWORLD + 2, 4, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offset);
     offset += sizeof(float) << 2;
     glVertexAttribPointer(VA_TOWORLD + 3, 4, GL_FLOAT, GL_FALSE, sizeof(InstanceData), (void*)offset);
-    offset += sizeof(CUBE_MESH_VERTICES) + sizeof(QMatrix4x4);
+    offset = sizeof(CUBE_MESH_VERTICES) + sizeof(QMatrix4x4);
     glVertexAttribIPointer(VA_COLORMOD, 1, GL_UNSIGNED_INT, sizeof(InstanceData), (void*) offset);
 
     glVertexAttribDivisor(VA_TOWORLD + 0, 1);
@@ -158,6 +158,17 @@ void CreateScene()
     glDisable(GL_STENCIL_TEST);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+}
+
+void DestroyScene()
+{
+    glUseProgram(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDeleteBuffers(3, scene.Buffers);
+    glBindVertexArray(0);
+    glDeleteVertexArrays(1, &scene.VAO);
+    unloadShader(scene.Shader);
 }
 
 void RenderFrame()
