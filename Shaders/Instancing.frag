@@ -1,16 +1,17 @@
 #version 410
 
-const vec3 Colors[2] = vec3[](
-    vec3(0.0), vec3(1.0)
+const vec4 COLORS[3] = vec4[](
+    vec4(1.0, 0.0, 0.0, 1.0), 
+    vec4(0.0, 1.0, 0.0, 1.0),
+    vec4(0.0, 0.0, 1.0, 1.0)
 );
 
 layout(location = 0)out vec4 outColor;
 
-in vec3 vNormal;
+in float vLighting;
 flat in uint vColorModifier;
 
 void main()
 {
-    vec3 outRGB = abs(Colors[vColorModifier] - vNormal);
-    outColor = vec4(outRGB, 1.0);
+    outColor = vLighting * COLORS[vColorModifier];
 }

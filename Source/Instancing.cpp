@@ -10,6 +10,9 @@ enum
 static struct Scene
 {
     QMatrix4x4 Projection, View;
+    QVector3D CameraAt = {0.f, 7.f, 8.f};
+    QVector3D CameraTarget = {0.f, 0.f, 0.f};
+    QVector3D CameraUp = {0.f, 1.f, 0.f};
     union
     {
         struct { GLuint VBO, IBO; };
@@ -78,7 +81,7 @@ size_t MakePyramid(quint32 levels, quint32 &outCount, quint8 *buffer, size_t max
         InstanceData *instances = new (buffer + sizeof(CUBE_MESH_VERTICES)) InstanceData[count];
         for (quint32 levelSize = levels; levelSize > 0; levelSize--)
         {
-            GLuint colorMod = levelSize % 2;
+            GLuint colorMod = levelSize % 3;
             float y = (levels - levelSize) * vStep;
             float start = (levelSize - 1) * hStep * (-0.5f);
             for (quint32 column = 0; column < levelSize; column++)
@@ -113,7 +116,7 @@ void CreateScene()
 {
     quint8 buff[2048];
     size_t totalBytes = MakePyramid(3, scene.NumInst, buff, sizeof(buff));
-    scene.View.lookAt({0.f, 7.f, 8.f}, {0.f, 0.f, 0.f}, {0.f, 1.f, 0.f});
+    scene.View.lookAt(scene.CameraAt, scene.CameraTarget, scene.CameraUp);
 
     scene.Shader = loadShader("Shaders/Instancing");
     glLinkProgram(scene.Shader);
